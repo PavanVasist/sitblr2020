@@ -1,0 +1,74 @@
+ID: sitblrdemo
+_schema-version: '2.1'
+parameters:
+  deploy_mode: html5-repo
+version: 0.0.1
+modules:
+  - name: sitblrdemo_appRouter
+    type: approuter.nodejs
+    path: sitblrdemo_appRouter
+    parameters:
+      disk-quota: 256M
+      memory: 256M
+    requires:
+      - name: sitblrdemo_html5_repo_runtime
+      - name: dest_sitblrdemo
+      - name: uaa_sitblrdemo
+      - name: portal_resources_sitblrdemo
+  - name: sitblrdemo_ui_deployer
+    type: com.sap.html5.application-content
+    path: sitblrdemo_ui_deployer
+    requires:
+      - name: sitblrdemo_html5_repo_host
+    build-parameters:
+      requires:
+        - name: es5
+          artifacts:
+            - './*'
+          target-path: resources/es5
+  - name: es5
+    type: html5
+    path: es5
+    build-parameters:
+      builder: grunt
+      supported-platforms: []
+      build-result: dist
+  - name: launchpadSIT
+    type: com.sap.portal.content
+    path: launchpadSIT
+    parameters:
+      stack: cflinuxfs3
+      memory: 128M
+      buildpack: 'https://github.com/cloudfoundry/nodejs-buildpack/releases/download/v1.6.39/nodejs-buildpack-cflinuxfs3-v1.6.39.zip'
+    requires:
+      - name: portal_resources_sitblrdemo
+      - name: uaa_sitblrdemo
+      - name: sitblrdemo_html5_repo_host
+      - name: sitblrdemo_ui_deployer
+resources:
+  - name: sitblrdemo_html5_repo_runtime
+    parameters:
+      service-plan: app-runtime
+      service: html5-apps-repo
+    type: org.cloudfoundry.managed-service
+  - name: sitblrdemo_html5_repo_host
+    parameters:
+      service-plan: app-host
+      service: html5-apps-repo
+    type: org.cloudfoundry.managed-service
+  - name: uaa_sitblrdemo
+    parameters:
+      path: ./xs-security.json
+      service-plan: application
+      service: xsuaa
+    type: org.cloudfoundry.managed-service
+  - name: dest_sitblrdemo
+    parameters:
+      service-plan: lite
+      service: destination
+    type: org.cloudfoundry.managed-service
+  - name: portal_resources_sitblrdemo
+    parameters:
+      service-plan: standard
+      service: portal
+    type: org.cloudfoundry.managed-service
